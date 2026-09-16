@@ -5,10 +5,11 @@ const {
   Setting,
   Notice,
   TFolder,
+  TFile,
   MarkdownView,
   getLanguage,
 } = require("obsidian");
-const { execFile } = require("child_process");
+const { execFile, spawn } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -24,6 +25,7 @@ const STRINGS = {
   en: {
     "ribbon.tooltip": "MarkItDown Import",
     "command.openImporter": "Open MarkItDown Importer",
+    "menu.convertFile": "Convert to Markdown",
     "notice.converting": "MarkItDown is converting {count} source(s)...",
     "notice.conversionFailed": "Conversion failed: {source} {error}",
     "notice.conversionsComplete": "MarkItDown completed {count} conversion(s)",
@@ -78,14 +80,16 @@ const STRINGS = {
     "settings.env.note": "After first install or copying the plugin to another user, check and install the local runtime here.",
     "settings.env.notChecked": "Environment not checked yet",
     "settings.env.check.name": "Check environment",
-    "settings.env.check.desc": "Check Python, MarkItDown, bridge script, YouTube captions, OCR, and ffmpeg.",
+    "settings.env.check.desc": "Check Python, MarkItDown, Docling, bridge script, YouTube captions, OCR, and ffmpeg.",
     "settings.env.check.button": "Check environment",
     "settings.env.install.name": "Install/update Python environment",
-    "settings.env.install.desc": "Create a .venv in the current vault and install markitdown[all], YouTube caption tools, and related dependencies.",
+    "settings.env.install.desc": "Create a .venv in the current vault and install markitdown[all], YouTube caption tools, and related dependencies (plus Docling if enabled above).",
     "settings.env.install.button": "Install environment",
     "settings.env.useVenv.name": "Use vault .venv",
     "settings.env.useVenv.desc": "Set the Python path to the cross-platform .venv Python under the current vault.",
     "settings.env.useVenv.button": "Use .venv",
+    "settings.env.installDocling.name": "Install Docling for PDF (optional)",
+    "settings.env.installDocling.desc": "Adds the Docling PDF engine to the environment install. Large download (pulls torch and models). If off, PDF conversion falls back to MarkItDown.",
     "settings.env.ffmpeg.name": "Install ffmpeg (optional)",
     "settings.env.ffmpeg.desc": "Audio transcription often needs ffmpeg. Installs into the vault Python environment without Homebrew.",
     "settings.env.ffmpeg.button": "Install ffmpeg",
@@ -103,6 +107,8 @@ const STRINGS = {
     "settings.env.ocrTesseractNote": "OCR: this platform uses optional Tesseract; without it, images fall back to MarkItDown defaults.",
     "settings.env.markitdownInstalled": "MarkItDown: installed",
     "settings.env.markitdownNotReady": "MarkItDown: not ready ({error})",
+    "settings.env.doclingInstalled": "Docling: installed (PDF engine)",
+    "settings.env.doclingNotInstalled": "Docling: not installed (PDF falls back to MarkItDown)",
     "settings.env.youtubeTranscriptInstalled": "YouTube captions: youtube-transcript-api installed",
     "settings.env.youtubeTranscriptMissing": "YouTube captions: youtube-transcript-api not installed",
     "settings.env.ytdlpInstalled": "YouTube metadata: yt-dlp installed",
@@ -122,6 +128,7 @@ const STRINGS = {
     "settings.env.installingMarkitdownNote": "This step may take a few minutes.",
     "settings.env.installingFfmpegTool": "Installing audio tool imageio-ffmpeg...",
     "settings.env.installingYoutubeTools": "Installing YouTube tools youtube-transcript-api and yt-dlp...",
+    "settings.env.installingDocling": "Installing Docling PDF engine (large download)...",
     "settings.env.installingPytesseract": "Installing optional OCR package pytesseract...",
     "settings.env.installComplete": "Install complete",
     "settings.env.installFailed": "Install failed",
@@ -139,6 +146,7 @@ const STRINGS = {
   vi: {
     "ribbon.tooltip": "Nhập MarkItDown",
     "command.openImporter": "Mở trình nhập MarkItDown",
+    "menu.convertFile": "Chuyển thành Markdown",
     "notice.converting": "MarkItDown đang chuyển đổi {count} nguồn...",
     "notice.conversionFailed": "Chuyển đổi thất bại: {source} {error}",
     "notice.conversionsComplete": "MarkItDown hoàn tất {count} lần chuyển đổi",
@@ -193,14 +201,16 @@ const STRINGS = {
     "settings.env.note": "Sau khi cài lần đầu hoặc sao chép plugin cho người khác, kiểm tra và cài môi trường cục bộ tại đây.",
     "settings.env.notChecked": "Chưa kiểm tra môi trường",
     "settings.env.check.name": "Kiểm tra môi trường",
-    "settings.env.check.desc": "Kiểm tra Python, MarkItDown, script cầu nối, phụ đề YouTube, OCR và ffmpeg.",
+    "settings.env.check.desc": "Kiểm tra Python, MarkItDown, Docling, script cầu nối, phụ đề YouTube, OCR và ffmpeg.",
     "settings.env.check.button": "Kiểm tra môi trường",
     "settings.env.install.name": "Cài/cập nhật môi trường Python",
-    "settings.env.install.desc": "Tạo .venv trong vault hiện tại và cài markitdown[all], công cụ phụ đề YouTube và các phụ thuộc liên quan.",
+    "settings.env.install.desc": "Tạo .venv trong vault hiện tại và cài markitdown[all], công cụ phụ đề YouTube và các phụ thuộc liên quan (kèm Docling nếu bật ở trên).",
     "settings.env.install.button": "Cài môi trường",
     "settings.env.useVenv.name": "Dùng .venv của vault",
     "settings.env.useVenv.desc": "Đặt đường dẫn Python sang Python .venv đa nền tảng trong vault hiện tại.",
     "settings.env.useVenv.button": "Dùng .venv",
+    "settings.env.installDocling.name": "Cài Docling cho PDF (tùy chọn)",
+    "settings.env.installDocling.desc": "Thêm engine PDF Docling vào bước cài môi trường. Tải khá nặng (kéo theo torch và model). Nếu tắt, PDF dùng fallback MarkItDown.",
     "settings.env.ffmpeg.name": "Cài ffmpeg (tùy chọn)",
     "settings.env.ffmpeg.desc": "Phiên âm âm thanh thường cần ffmpeg. Cài vào môi trường Python của vault, không cần Homebrew.",
     "settings.env.ffmpeg.button": "Cài ffmpeg",
@@ -218,6 +228,8 @@ const STRINGS = {
     "settings.env.ocrTesseractNote": "OCR: nền tảng này dùng Tesseract tùy chọn; nếu chưa cài, ảnh sẽ dùng mặc định MarkItDown.",
     "settings.env.markitdownInstalled": "MarkItDown: đã cài",
     "settings.env.markitdownNotReady": "MarkItDown: chưa sẵn sàng ({error})",
+    "settings.env.doclingInstalled": "Docling: đã cài (engine PDF)",
+    "settings.env.doclingNotInstalled": "Docling: chưa cài (PDF dùng fallback MarkItDown)",
     "settings.env.youtubeTranscriptInstalled": "Phụ đề YouTube: đã cài youtube-transcript-api",
     "settings.env.youtubeTranscriptMissing": "Phụ đề YouTube: chưa cài youtube-transcript-api",
     "settings.env.ytdlpInstalled": "Siêu dữ liệu YouTube: đã cài yt-dlp",
@@ -237,6 +249,7 @@ const STRINGS = {
     "settings.env.installingMarkitdownNote": "Bước này có thể mất vài phút.",
     "settings.env.installingFfmpegTool": "Đang cài công cụ âm thanh imageio-ffmpeg...",
     "settings.env.installingYoutubeTools": "Đang cài công cụ YouTube youtube-transcript-api và yt-dlp...",
+    "settings.env.installingDocling": "Đang cài engine PDF Docling (tải khá nặng)...",
     "settings.env.installingPytesseract": "Đang cài gói OCR tùy chọn pytesseract...",
     "settings.env.installComplete": "Cài đặt hoàn tất",
     "settings.env.installFailed": "Cài đặt thất bại",
@@ -316,6 +329,7 @@ const DEFAULT_SETTINGS = {
   insertLinksOnEditorDrop: true,
   revealAfterImport: true,
   overwrite: false,
+  installDocling: false,
 };
 
 const SUPPORTED_EXTENSIONS = new Set([
@@ -372,6 +386,10 @@ module.exports = class MarkItDownImporterPlugin extends Plugin {
       name: i18n.t("command.openImporter"),
       callback: () => new MarkItDownImportModal(this).open(),
     });
+
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => this.addConvertFileMenuItem(menu, file)),
+    );
 
     this.registerDomEvent(document, "drop", (event) => this.handleEditorDrop(event), true);
 
@@ -430,6 +448,63 @@ module.exports = class MarkItDownImporterPlugin extends Plugin {
       return [];
     }
     return runBridge(this, normalizedSources, dest, options);
+  }
+
+  addConvertFileMenuItem(menu, file) {
+    if (!(file instanceof TFile)) {
+      return;
+    }
+    const extension = "." + String(file.extension || "").toLowerCase();
+    if (!SUPPORTED_EXTENSIONS.has(extension)) {
+      return;
+    }
+    menu.addItem((item) =>
+      item
+        .setTitle(i18n.t("menu.convertFile"))
+        .setIcon("file-down")
+        .onClick(() => this.convertVaultFile(file)),
+    );
+  }
+
+  async convertVaultFile(file) {
+    const sourcePath = path.join(this.getVaultPath(), file.path);
+    const parent = path.posix.dirname(file.path);
+    const dest = parent === "." ? "" : parent;
+    new Notice(i18n.t("notice.converting", { count: 1 }));
+    try {
+      const results = await this.runImport([sourcePath], dest, {
+        overwrite: this.settings.overwrite,
+      });
+      const successes = results.filter((result) => result.ok && result.output);
+      for (const failure of results.filter((result) => !result.ok)) {
+        new Notice(
+          i18n.t("notice.conversionFailed", {
+            source: failure.source || file.path,
+            error: failure.error || "",
+          }),
+        );
+      }
+      if (!successes.length) {
+        return;
+      }
+      new Notice(i18n.t("notice.conversionsComplete", { count: successes.length }));
+      if (this.settings.revealAfterImport) {
+        await this.openImportedNote(successes[0].output);
+      }
+    } catch (error) {
+      new Notice(i18n.t("notice.importFailed", { error: error.message }));
+    }
+  }
+
+  async openImportedNote(outputPath) {
+    const relativePath = outputToVaultRelativePath(this, outputPath);
+    if (!relativePath) {
+      return;
+    }
+    const target = this.app.vault.getAbstractFileByPath(relativePath);
+    if (target) {
+      await this.app.workspace.getLeaf(false).openFile(target);
+    }
   }
 
   async handleEditorDrop(event) {
@@ -818,14 +893,7 @@ class MarkItDownImportModal extends Modal {
   }
 
   async openImportedNote(outputPath) {
-    const relativePath = outputToVaultRelativePath(this.plugin, outputPath);
-    if (!relativePath) {
-      return;
-    }
-    const file = this.app.vault.getAbstractFileByPath(relativePath);
-    if (file) {
-      await this.app.workspace.getLeaf(false).openFile(file);
-    }
+    return this.plugin.openImportedNote(outputPath);
   }
 
   setStatus(text) {
@@ -959,6 +1027,16 @@ class MarkItDownImporterSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
+      .setName(i18n.t("settings.env.installDocling.name"))
+      .setDesc(i18n.t("settings.env.installDocling.desc"))
+      .addToggle((toggle) => {
+        toggle.setValue(this.plugin.settings.installDocling).onChange(async (value) => {
+          this.plugin.settings.installDocling = value;
+          await this.plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
       .setName(i18n.t("settings.env.useVenv.name"))
       .setDesc(i18n.t("settings.env.useVenv.desc"))
       .addButton((button) => {
@@ -1034,6 +1112,16 @@ class MarkItDownImporterSettingTab extends PluginSettingTab {
         lines.push(i18n.t("settings.env.markitdownInstalled"));
       } catch (error) {
         lines.push(i18n.t("settings.env.markitdownNotReady", { error: error.message }));
+      }
+      try {
+        await execFilePromise(
+          pythonPath,
+          ["-c", "from docling.document_converter import DocumentConverter; print('ok')"],
+          { timeout: 60000 },
+        );
+        lines.push(i18n.t("settings.env.doclingInstalled"));
+      } catch (error) {
+        lines.push(i18n.t("settings.env.doclingNotInstalled"));
       }
       try {
         await execFilePromise(
@@ -1115,38 +1203,47 @@ class MarkItDownImporterSettingTab extends PluginSettingTab {
         [...installerPython.args, "-m", "venv", venvDir],
         { timeout: 120000 },
       );
-      this.setEnvironmentStatus([i18n.t("settings.env.upgradingPip")]);
-      await execFilePromise(venvPython, ["-m", "pip", "install", "--upgrade", "pip"], {
-        timeout: 180000,
-      });
-      this.setEnvironmentStatus([
-        i18n.t("settings.env.installingMarkitdown"),
-        i18n.t("settings.env.installingMarkitdownNote"),
-      ]);
-      await execFilePromise(venvPython, ["-m", "pip", "install", "markitdown[all]"], {
-        timeout: 20 * 60 * 1000,
-        maxBuffer: 1024 * 1024 * 20,
-      });
-      this.setEnvironmentStatus([i18n.t("settings.env.installingFfmpegTool")]);
-      await execFilePromise(venvPython, ["-m", "pip", "install", "imageio-ffmpeg"], {
-        timeout: 10 * 60 * 1000,
-        maxBuffer: 1024 * 1024 * 20,
-      });
-      this.setEnvironmentStatus([i18n.t("settings.env.installingYoutubeTools")]);
-      await execFilePromise(
-        venvPython,
-        ["-m", "pip", "install", "youtube-transcript-api", "yt-dlp"],
-        {
-          timeout: 10 * 60 * 1000,
-          maxBuffer: 1024 * 1024 * 20,
-        },
+      const pipInstall = async (labels, args, timeout) => {
+        this.setEnvironmentStatus(labels);
+        await execFileStreaming(
+          venvPython,
+          ["-m", "pip", "install", ...args, "--progress-bar", "raw"],
+          { timeout },
+          (output) => {
+            const tail = cleanCommandOutput(output).split("\n").slice(-12);
+            this.setEnvironmentStatus([...labels, ...tail]);
+          },
+        );
+      };
+
+      await pipInstall([i18n.t("settings.env.upgradingPip")], ["--upgrade", "pip"], 180000);
+      await pipInstall(
+        [
+          i18n.t("settings.env.installingMarkitdown"),
+          i18n.t("settings.env.installingMarkitdownNote"),
+        ],
+        ["markitdown[all]"],
+        20 * 60 * 1000,
+      );
+      if (this.plugin.settings.installDocling) {
+        await pipInstall([i18n.t("settings.env.installingDocling")], ["docling"], 30 * 60 * 1000);
+      }
+      await pipInstall(
+        [i18n.t("settings.env.installingFfmpegTool")],
+        ["imageio-ffmpeg"],
+        10 * 60 * 1000,
+      );
+      await pipInstall(
+        [i18n.t("settings.env.installingYoutubeTools")],
+        ["youtube-transcript-api", "yt-dlp"],
+        10 * 60 * 1000,
       );
       if (!IS_MAC) {
-        this.setEnvironmentStatus([i18n.t("settings.env.installingPytesseract")]);
-        await execFilePromise(venvPython, ["-m", "pip", "install", "pytesseract"], {
-          timeout: 10 * 60 * 1000,
-          maxBuffer: 1024 * 1024 * 20,
-        });
+        await pipInstall(
+          [i18n.t("settings.env.installingPytesseract")],
+          ["pytesseract"],
+          10 * 60 * 1000,
+        );
       }
 
       this.plugin.settings.pythonPath = venvPython;
@@ -1155,6 +1252,7 @@ class MarkItDownImporterSettingTab extends PluginSettingTab {
         i18n.t("settings.env.installComplete"),
         i18n.t("settings.env.python", { path: venvPython }),
         i18n.t("settings.env.markitdownInstalled"),
+        ...(this.plugin.settings.installDocling ? [i18n.t("settings.env.doclingInstalled")] : []),
         i18n.t("settings.env.youtubeTranscriptInstalled"),
         i18n.t("settings.env.ytdlpInstalled"),
         i18n.t("settings.env.ffmpegInPython", { path: venvPython }),
@@ -1284,6 +1382,51 @@ function execFilePromise(command, args, options = {}) {
         return;
       }
       resolve({ stdout: cleanStdout, stderr: cleanStderr });
+    });
+  });
+}
+
+function cleanCommandOutput(text) {
+  return String(text || "")
+    .replace(/\u001b\[[0-9;?]*[A-Za-z]/g, "")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line)
+    .join("\n");
+}
+
+function execFileStreaming(command, args, options = {}, onChunk) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args);
+    let output = "";
+    let lastRender = 0;
+    const handle = (data) => {
+      output = (output + data.toString()).slice(-8000);
+      const now = Date.now();
+      if (now - lastRender >= 500) {
+        lastRender = now;
+        onChunk(output);
+      }
+    };
+    child.stdout.on("data", handle);
+    child.stderr.on("data", handle);
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("Command timed out."));
+    }, options.timeout || 10 * 60 * 1000);
+    child.on("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code === 0) {
+        resolve(output);
+        return;
+      }
+      const tail = cleanCommandOutput(output).split("\n").slice(-15).join("\n");
+      reject(new Error(tail || `Command failed with exit code ${code}`));
     });
   });
 }

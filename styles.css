@@ -200,6 +200,8 @@
   font-family: var(--font-monospace);
   font-size: var(--font-ui-small);
   overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .justmarkitdown-env-status.is-error {

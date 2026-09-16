@@ -26,6 +26,8 @@ This fork is not published in the community plugin store. Install it manually:
 
 You can also drag a supported file, folder, or URL directly into the Markdown editor. The plugin converts it and inserts a wiki link at the cursor.
 
+Right-click a supported file in the File Explorer and choose **Convert to Markdown** to write the note next to the source file.
+
 ## Supported Sources
 
 - PDF
@@ -42,7 +44,8 @@ You can also drag a supported file, folder, or URL directly into the Markdown ed
 ## Notes
 
 - The plugin runs `converter_bridge.py` with the vault-local Python environment.
-- The settings page can create `.venv` in the current vault and install `markitdown[all]`.
+- The settings page can create `.venv` in the current vault and install `markitdown[all]`. Docling is installed only when the optional **Install Docling for PDF** toggle is enabled.
+- PDF files use [Docling](https://github.com/DS4SD/docling) as the preferred engine when it is installed, which preserves headings and tables. Enable **Environment tools → Install Docling for PDF** before running the install (or add it manually with `pip install docling` into the vault `.venv`). If Docling is missing or fails, PDF conversion falls back to MarkItDown automatically.
 - Python 3.10 or newer is required for the current MarkItDown package.
 - macOS image OCR uses Apple Vision through `macos_ocr.swift` when available.
 - Windows and Linux image OCR can use optional Tesseract OCR if it is installed on the system. Without Tesseract, image handling falls back to MarkItDown defaults.
@@ -58,7 +61,7 @@ You can also drag a supported file, folder, or URL directly into the Markdown ed
 
 ## Settings
 
-- **Environment tools**: check Python, MarkItDown, bridge scripts, YouTube caption tools, OCR, and ffmpeg; create/update `.venv`; optionally install ffmpeg into the vault Python environment.
+- **Environment tools**: check Python, MarkItDown, Docling, bridge scripts, YouTube caption tools, OCR, and ffmpeg; create/update `.venv` (installs `markitdown[all]`; Docling only when the **Install Docling for PDF** toggle is on); optionally install ffmpeg into the vault Python environment.
 - **Python path**: Python used to run the bridge.
 - **Default destination folder**: destination folder relative to the vault.
 - **Convert folders recursively**: convert supported files inside folders recursively.
@@ -105,6 +108,8 @@ Bản fork này chưa có trên community plugin store. Cài thủ công:
 
 Bạn cũng có thể kéo tệp, thư mục hoặc URL được hỗ trợ trực tiếp vào trình soạn Markdown. Plugin sẽ chuyển đổi và chèn wiki link tại vị trí con trỏ.
 
+Bạn cũng có thể click phải một tệp được hỗ trợ trong File Explorer và chọn **Chuyển thành Markdown** để tạo ghi chú ngay cạnh tệp gốc.
+
 ## Nguồn được hỗ trợ
 
 - PDF
@@ -121,7 +126,8 @@ Bạn cũng có thể kéo tệp, thư mục hoặc URL được hỗ trợ tr�
 ## Ghi chú
 
 - Plugin chạy `converter_bridge.py` bằng môi trường Python trong vault.
-- Trang cài đặt có thể tạo `.venv` trong vault và cài `markitdown[all]`.
+- Trang cài đặt có thể tạo `.venv` trong vault và cài `markitdown[all]`. Docling chỉ được cài khi bật tùy chọn **Cài Docling cho PDF**.
+- PDF dùng [Docling](https://github.com/DS4SD/docling) làm engine ưu tiên khi đã cài, giữ được heading và bảng. Bật **Công cụ môi trường → Cài Docling cho PDF** trước khi chạy cài đặt (hoặc cài tay bằng `pip install docling` vào `.venv` của vault). Nếu thiếu Docling hoặc lỗi, PDF tự động fallback về MarkItDown.
 - MarkItDown hiện tại cần Python 3.10 trở lên.
 - OCR ảnh trên macOS dùng Apple Vision qua `macos_ocr.swift` khi có sẵn.
 - Windows và Linux có thể dùng Tesseract OCR tùy chọn. Nếu chưa cài, ảnh sẽ dùng mặc định MarkItDown.
@@ -137,7 +143,7 @@ Bạn cũng có thể kéo tệp, thư mục hoặc URL được hỗ trợ tr�
 
 ## Cài đặt plugin
 
-- **Công cụ môi trường**: kiểm tra Python, MarkItDown, script cầu nối, công cụ phụ đề YouTube, OCR và ffmpeg; tạo/cập nhật `.venv`; tùy chọn cài ffmpeg vào môi trường Python của vault.
+- **Công cụ môi trường**: kiểm tra Python, MarkItDown, Docling, script cầu nối, công cụ phụ đề YouTube, OCR và ffmpeg; tạo/cập nhật `.venv` (cài `markitdown[all]`; Docling chỉ khi bật tùy chọn **Cài Docling cho PDF**); tùy chọn cài ffmpeg vào môi trường Python của vault.
 - **Đường dẫn Python**: Python dùng để chạy cầu nối.
 - **Thư mục đích mặc định**: thư mục đích tương đối với vault.
 - **Chuyển đổi thư mục đệ quy**: xử lý đệ quy các tệp được hỗ trợ trong thư mục.

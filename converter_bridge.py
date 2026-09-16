@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import warnings
 import zipfile
 from datetime import datetime, timezone
@@ -240,6 +241,57 @@ def convert_with_markitdown(source: Path | str) -> str:
     else:
         result = md.convert(str(source))
     return result.text_content.strip()
+
+
+_DOCLING_CONVERTER = None
+_VI_DIACRITIC_RE = re.compile(
+    r"[àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]",
+    re.IGNORECASE,
+)
+
+
+def _docling_converter():
+    global _DOCLING_CONVERTER
+    if _DOCLING_CONVERTER is None:
+        from docling.document_converter import DocumentConverter, PdfFormatOption
+        from docling.datamodel.base_models import InputFormat
+        from docling.datamodel.pipeline_options import PdfPipelineOptions
+        from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
+
+        pipeline_options = PdfPipelineOptions()
+        pipeline_options.do_ocr = False
+        pipeline_options.do_table_structure = True
+        _DOCLING_CONVERTER = DocumentConverter(
+            format_options={
+                InputFormat.PDF: PdfFormatOption(
+                    pipeline_options=pipeline_options,
+                    backend=PyPdfiumDocumentBackend,
+                )
+            }
+        )
+    return _DOCLING_CONVERTER
+
+
+def _detect_broken_vietnamese_spacing(text: str) -> bool:
+    words = text.split()[:3000]
+    if len(words) < 40:
+        return False
+    short_words = sum(1 for word in words if len(word) <= 2)
+    diacritic_words = sum(1 for word in words if _VI_DIACRITIC_RE.search(word))
+    return short_words / len(words) > 0.30 and diacritic_words / len(words) > 0.15
+
+
+def convert_with_docling(source: Path) -> str:
+    started = time.monotonic()
+    result = _docling_converter().convert(str(source))
+    markdown = clean_extracted_text(result.document.export_to_markdown())
+    print(f"Docling PDF convert: {time.monotonic() - started:.1f}s ({source.name})", file=sys.stderr)
+    if _detect_broken_vietnamese_spacing(markdown):
+        print(
+            f"Docling PDF warning: possible broken Vietnamese spacing, review manually: {source}",
+            file=sys.stderr,
+        )
+    return markdown
 
 
 def fetch_youtube_oembed(url: str) -> dict[str, str]:
@@ -1017,6 +1069,11 @@ def convert_content(source: Path | str, tools_dir: Path | None, ocr_script: Path
             return legacy_doc
     if suffix in IMAGE_EXTENSIONS:
         return convert_image(path, ocr_script)
+    if suffix == ".pdf":
+        try:
+            return convert_with_docling(path), "docling"
+        except Exception:
+            pass
     return convert_with_markitdown(path), "markitdown"
 
 
