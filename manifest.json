@@ -1,0 +1,10 @@
+{
+  "id": "justmarkitdown",
+  "name": "JustMarkItDown",
+  "version": "1.0.5",
+  "minAppVersion": "1.5.0",
+  "description": "Drag files, folders, archives, images, audio, web pages, YouTube links, and Bilibili links into your vault as Markdown notes.",
+  "author": "phamhuulocforwork",
+  "authorUrl": "",
+  "isDesktopOnly": true
+}

@@ -1,0 +1,233 @@
+.justmarkitdown-shell {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  transform: none;
+  width: min(1120px, calc(100vw - 48px));
+  height: min(680px, calc(100vh - 48px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  min-width: min(680px, calc(100vw - 24px));
+  min-height: min(460px, calc(100vh - 24px));
+  resize: both;
+  overflow: auto;
+}
+
+.justmarkitdown-shell .modal-content {
+  overflow: visible;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+.justmarkitdown-shell .modal-close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  margin: 0;
+  float: none;
+}
+
+.justmarkitdown-modal {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  padding-top: 2px;
+}
+
+.justmarkitdown-header {
+  padding-right: 42px;
+  cursor: move;
+  user-select: none;
+}
+
+.justmarkitdown-header h2 {
+  margin-top: 0;
+}
+
+.justmarkitdown-header p {
+  cursor: move;
+}
+
+.justmarkitdown-modal p {
+  color: var(--text-muted);
+  margin-top: 0;
+}
+
+.justmarkitdown-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.55fr) minmax(260px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 12px 0;
+}
+
+.justmarkitdown-field {
+  display: grid;
+  gap: 6px;
+}
+
+.justmarkitdown-field label {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-semibold);
+}
+
+.justmarkitdown-field input,
+.justmarkitdown-field select {
+  width: 100%;
+}
+
+.justmarkitdown-url-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+
+.justmarkitdown-url-row textarea {
+  min-height: 58px;
+  resize: vertical;
+}
+
+.justmarkitdown-url-row button {
+  align-self: stretch;
+}
+
+.justmarkitdown-dropzone {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 170px;
+  border: 2px dashed var(--background-modifier-border);
+  background: var(--background-secondary);
+  padding: 18px;
+  text-align: center;
+}
+
+.justmarkitdown-dropzone.is-dragging {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+
+.justmarkitdown-drop-title {
+  font-size: 20px;
+  font-weight: var(--font-bold);
+}
+
+.justmarkitdown-drop-copy {
+  color: var(--text-muted);
+}
+
+.justmarkitdown-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.justmarkitdown-dropzone input[type="file"] {
+  display: none;
+}
+
+.justmarkitdown-status {
+  min-height: 28px;
+  margin: 14px 0 8px;
+  color: var(--text-muted);
+}
+
+.justmarkitdown-results {
+  display: grid;
+  gap: 8px;
+  max-height: min(220px, 24vh);
+  overflow: auto;
+}
+
+.justmarkitdown-result {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+}
+
+.justmarkitdown-badge {
+  align-self: start;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-bold);
+  text-align: center;
+}
+
+.justmarkitdown-badge.is-error {
+  background: var(--text-error);
+  color: var(--text-on-accent);
+}
+
+.justmarkitdown-result-name {
+  font-weight: var(--font-semibold);
+  overflow-wrap: anywhere;
+}
+
+.justmarkitdown-result-detail {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  overflow-wrap: anywhere;
+}
+
+.justmarkitdown-dragging {
+  user-select: none;
+}
+
+.justmarkitdown-setting-note {
+  color: var(--text-muted);
+  margin-top: 0;
+}
+
+.justmarkitdown-env-status {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+  overflow-wrap: anywhere;
+}
+
+.justmarkitdown-env-status.is-error {
+  border-color: var(--text-error);
+  color: var(--text-error);
+}
+
+@media (max-width: 720px) {
+  .justmarkitdown-shell {
+    width: calc(100vw - 16px);
+    height: min(680px, calc(100vh - 16px));
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .justmarkitdown-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .justmarkitdown-url-row {
+    grid-template-columns: 1fr;
+  }
+
+  .justmarkitdown-result {
+    grid-template-columns: 1fr;
+  }
+
+  .justmarkitdown-badge {
+    justify-self: start;
+  }
+}
